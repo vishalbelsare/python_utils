@@ -1,4 +1,4 @@
-# Preprocess Functions for Data Analysis in Python
+# Useful Python functions for data analysis
 
 ## Prerequisites
 * Anaconda, manages Python environment and dependencies
@@ -6,11 +6,11 @@
 ## Installation
 The package is currently not available directly via PyPi. Instead, you can use: 
 
-`pip install git+https://github.com/mloning/preprocess_functions.git`
+`pip install git+https://github.com/mloning/python_utils.git`
 
 Or alternatively, you can
-1. Download project: `git clone https://github.com/mloning/preprocess_functions.git`
-2. Move into root folder: `cd preprocess_functions`
+1. Download project: `git clone https://github.com/mloning/python_utils.git`
+2. Move into root folder: `cd python_utils`
 3. Install as pip package: `pip install .`
 
 ## Additional Notes
