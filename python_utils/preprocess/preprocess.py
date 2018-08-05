@@ -91,3 +91,4 @@ def add_time_parts(df, col_name, suffix='', drop=False):
 
     if drop:
         df.drop(col_name, axis=1, inplace=True)
+

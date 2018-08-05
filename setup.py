@@ -6,9 +6,9 @@ def readme():
         return f.read()
 
 
-setup(name='preprocess_functions',
+setup(name='python_utils',
       version='0.0.1',
-      description='Pre-process functions for data analysis in Python',
+      description='Collection of useful functions for data analysis in Python',
       long_description=readme(),
       classifiers=[
           'Programming Language :: Python',
@@ -16,8 +16,8 @@ setup(name='preprocess_functions',
       ],
       keywords=['data-manipulation', 'data-preprocessing',
                 'pandas', 'Python'],
-      url='https://github.com/mloning/preprocess_functions',
-      author='Markus Löning',
+      url='https://github.com/mloning/python_utils',
+      author='mloning',
       author_email='markus.loning.17@ucl.ac.uk',
       license='MIT',
       packages=find_packages(exclude=['*.tests', '*.tests.*', 'tests.*',
