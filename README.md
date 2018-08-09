@@ -4,7 +4,7 @@
 * Anaconda, manages Python environment and dependencies
 
 ## Installation
-The package is currently not available directly via PyPi. Instead, you can use: 
+The package is currently not available directly via PyPI. Instead, you can use: 
 
 `pip install git+https://github.com/mloning/python_utils.git`
 
