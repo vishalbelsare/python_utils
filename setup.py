@@ -12,7 +12,7 @@ setup(name='python_utils',
       long_description=readme(),
       classifiers=[
           'Programming Language :: Python',
-          'Programming Language :: Python :: 3.6',
+          'Programming Language :: Python :: 3.6'
       ],
       keywords=['data-manipulation', 'data-preprocessing',
                 'pandas', 'Python'],
@@ -22,8 +22,10 @@ setup(name='python_utils',
       license='MIT',
       packages=find_packages(exclude=['*.tests', '*.tests.*', 'tests.*',
                                       'tests', 'test_*']),
+      python_requires='>=3, <4',
       install_requires=[
-        'numpy', 'pandas'
+          'numpy>=1.13',
+          'pandas>=0.22'
       ],
       test_suite='nose.collector',
       tests_require=['nose'],
