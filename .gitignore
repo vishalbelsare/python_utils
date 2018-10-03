@@ -9,6 +9,10 @@ data/
 ## OS files
 .DS_Store
 
+## IDE project files
+.idea/
+.idea/*
+
 ## Python-related files
 # Byte-compiled / optimized / DLL files
 __pycache__/
