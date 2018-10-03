@@ -25,7 +25,9 @@ setup(name='python_utils',
       python_requires='>=3, <4',
       install_requires=[
           'numpy>=1.13',
-          'pandas>=0.22'
+          'pandas>=0.22',
+          'scikit-learn>=0.19',
+          'astropy'
       ],
       test_suite='nose.collector',
       tests_require=['nose'],

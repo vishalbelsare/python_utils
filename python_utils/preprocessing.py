@@ -3,37 +3,22 @@ import pandas as pd
 from pandas.api.types import is_string_dtype
 
 
-def time_discretise_panel_data(df, panelvar=None, timevar=None, freq=None,
-                               aggs=None):
-    """
-    Discretises time variable of panel data-frame (df) by aggregating
-    variables into equal time-bins for each panel.
-
-
-    :param df: pandas data-frame
-    :param panelvar: panel identifier
-    :param timevar: time variable of panel data
-    :param freq: frequency for time-binning
-    :param aggs: aggregation  as in pandas agg function
-    :return: time-discretised aggregated data-frame
-    """
-
-    df_grouped = (df
-                  .groupby([pd.Grouper(key=timevar, freq=freq), panelvar])
-                  .agg(aggs)
-                  .reset_index())
-
-    unique_panels = df_grouped[panelvar].unique()
-    start = df[timevar].min()
-    end = df[timevar].max()
-    time_range = pd.date_range(start=start, end=end, freq=freq)
-    full_index = pd.MultiIndex.from_product([unique_panels, time_range],
+def synchronise_panel_data(df, timevar=None, panelvar=None, valuevar=None,
+                           agg_func=None, freq=None, fill_value=np.nan,
+                           start=None, end=None):
+    if start is None:
+        start = df[timevar].min()
+    if end is None:
+        end = df[timevar].max()
+    unique_periods = pd.date_range(start=start, end=end, freq=freq)
+    unique_panels = df[panelvar].unique()
+    full_index = pd.MultiIndex.from_product([unique_panels, unique_periods],
                                             names=[panelvar, timevar])
-
-    df_binned = (df_grouped
-                 .set_index([panelvar, timevar])
-                 .reindex(full_index))
-    return df_binned
+    df_sync = (df.groupby([panelvar, pd.Grouper(key=timevar, freq=freq)])
+               .agg({valuevar: agg_func})
+               .reindex(full_index, fill_value=fill_value)
+               .reset_index())
+    return df_sync
 
 
 def collapse_multicolumn_index(df):
