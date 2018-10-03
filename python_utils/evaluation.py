@@ -141,47 +141,46 @@ class DistributedStrategyEvaluator(StrategyEvaluator):
         return cv_results
 
 
-def evaluate_pointwise_score(y_true, y_pred, score_func):
-    pointwise_scores = score_func(y_true, y_pred)
-    check_consistent_length(pointwise_scores, y_true)
-    mean_score = np.mean(pointwise_scores)
-    stderr = np.std(pointwise_scores) / np.sqrt(pointwise_scores.shape[0])
-    return mean_score, stderr
-
-
-def evaluate_composite_score(y_true, y_pred, score_func):
-    """
-    Evaluate composite scores based on the contingency table like precision,
-    specificity or sensitivity by using jackknife re-sampling.
-    :param y_true:
-    :param y_pred:
-    :param score_func:
-    :return: score and standard error
-
-    References:
-    Efron and Stein, (1981), "The jackknife estimate of variance."
-    """
-
-    def compute_jackknife_stderr(x):
-        n = x.shape[0]
-        return np.sqrt((((n - 1) / n) * np.sum((x - x.mean()) ** 2)))
-
-    composite_score = score_func(y_true, y_pred)
-
-    # jackknifing to obtain std err estimate
-    index = np.arange(y_true.shape[0])
-    jack_idx = jackknife_resampling(index).astype(np.int)
-    jack_scores = np.array([score_func(y_true[idx], y_pred[idx])
-                            for idx in jack_idx])
-    jack_stderr = compute_jackknife_stderr(jack_scores)
-    return composite_score, jack_stderr
-
-
 def evaluate_score_func(y_true, y_pred, func=None, pointwise=False):
+
+    def _evaluate_pointwise_score(y_true, y_pred, score_func):
+        pointwise_scores = score_func(y_true, y_pred)
+        check_consistent_length(pointwise_scores, y_true)
+        mean_score = np.mean(pointwise_scores)
+        stderr = np.std(pointwise_scores) / np.sqrt(pointwise_scores.shape[0])
+        return mean_score, stderr
+
+    def _evaluate_composite_score(y_true, y_pred, score_func):
+        """
+        Evaluate composite scores based on the contingency table like precision,
+        specificity or sensitivity by using jackknife re-sampling.
+        :param y_true:
+        :param y_pred:
+        :param score_func:
+        :return: score and standard error
+
+        References:
+        Efron and Stein, (1981), "The jackknife estimate of variance."
+        """
+
+        def _compute_jackknife_stderr(x):
+            n = x.shape[0]
+            return np.sqrt((((n - 1) / n) * np.sum((x - x.mean()) ** 2)))
+
+        composite_score = score_func(y_true, y_pred)
+
+        # jackknifing to obtain std err estimate
+        index = np.arange(y_true.shape[0])
+        jack_idx = jackknife_resampling(index).astype(np.int)
+        jack_scores = np.array([score_func(y_true[idx], y_pred[idx])
+                                for idx in jack_idx])
+        jack_stderr = _compute_jackknife_stderr(jack_scores)
+        return composite_score, jack_stderr
+
     check_binary_array(y_true)
     y_true = column_or_1d(y_true)
     if pointwise:
-        mu, stderr = evaluate_pointwise_score(y_true, y_pred, func)
+        mu, stderr = _evaluate_pointwise_score(y_true, y_pred, func)
     else:
-        mu, stderr = evaluate_composite_score(y_true, y_pred, func)
+        mu, stderr = _evaluate_composite_score(y_true, y_pred, func)
     return mu, stderr

@@ -23,15 +23,16 @@ def synchronise_panel_data(df, timevar=None, panelvar=None, valuevar=None,
 
 def collapse_multicolumn_index(df):
     """
-    Transform in-place a 2-level column multi-index of a pandas data-frame
-    into a simple 1-level index by combining column names from both levels
+    Make in-place transformation of 2-level column multi-index of a
+    pandas data-frame into a simple 1-level index by combining column names
+    from both levels
     :param df: pandas data-frame
     """
 
-    colnames = df.columns.get_level_values(0) + '_' \
+    col_names = df.columns.get_level_values(0) + '_' \
                                               + df.columns.get_level_values(1)
     df.columns = df.columns.droplevel()
-    df.columns = colnames
+    df.columns = col_names
 
 
 def str_dtype_to_cats(df):
@@ -119,8 +120,8 @@ def add_time_parts(df, col_name, suffix='', drop=False):
     if not np.issubdtype(col.dtype, np.datetime64):
         df[col_name] = col = pd.to_datetime(col, infer_datetime_format=True)
 
-    for date_part in ('hour', 'minute', 'second', 'microsecond', 'nanosecond'):
-        df[suffix + date_part] = getattr(col.dt, date_part)
+    for time_part in ('hour', 'minute', 'second', 'microsecond', 'nanosecond'):
+        df[suffix + time_part] = getattr(col.dt, date_part)
 
     df[suffix + 'elapsed'] = col.astype(np.int64) // 10**9
 
