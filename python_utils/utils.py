@@ -18,4 +18,3 @@ def check_binary_array(*arrays):
     is_binary = [np.array_equal(array, array.astype(bool)) for array in arrays]
     if not all(is_binary):
         raise ValueError('Found input arrays which are not binary')
-

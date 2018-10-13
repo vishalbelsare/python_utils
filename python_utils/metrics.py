@@ -3,7 +3,7 @@ import warnings
 
 
 def neg_brier_loss_pointwise(y_true, y_pred):
-    return -(y_true - y_pred[:, 1]) ** 2
+    return -(y_true - y_pred) ** 2
 
 
 def accuracy_score_pointwise(y_true, y_pred):
@@ -11,7 +11,7 @@ def accuracy_score_pointwise(y_true, y_pred):
 
 
 def neg_log_loss_pointwise(y_true, y_pred, eps=1e-15):
-    y_pred_clipped = np.clip(y_pred[:, 1], eps, 1 - eps)
+    y_pred_clipped = np.clip(y_pred, eps, 1 - eps)
     loss = -((y_true * np.log(y_pred_clipped)) + (1 - y_true)
              * np.log(1 - y_pred_clipped))
     return -loss

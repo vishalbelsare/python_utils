@@ -15,8 +15,8 @@ class StrategyEvaluator:
         self.strategy_grid = strategy_grid
         self.outer_scoring = {}
         self.inner_scoring = {}
-        self.outer_cv = KFold()
-        self.inner_cv = KFold()
+        self.outer_cv = KFold(n_splits=10)
+        self.inner_cv = KFold(n_splits=10)
         self.cv_results = []
 
     def evaluate(self, X, y,
@@ -147,13 +147,14 @@ def evaluate_score_func(y_true, y_pred, func=None, pointwise=False):
         pointwise_scores = score_func(y_true, y_pred)
         check_consistent_length(pointwise_scores, y_true)
         mean_score = np.mean(pointwise_scores)
-        stderr = np.std(pointwise_scores) / np.sqrt(pointwise_scores.shape[0])
+        n = pointwise_scores.shape[0]
+        stderr = np.std(pointwise_scores) / np.sqrt(n - 1)
         return mean_score, stderr
 
     def _evaluate_composite_score(y_true, y_pred, score_func):
         """
-        Evaluate composite scores based on the contingency table like precision,
-        specificity or sensitivity by using jackknife re-sampling.
+        Evaluate composite scores based on the contingency table like
+        precision, specificity or sensitivity by using jackknife re-sampling.
         :param y_true:
         :param y_pred:
         :param score_func:
@@ -165,7 +166,8 @@ def evaluate_score_func(y_true, y_pred, func=None, pointwise=False):
 
         def _compute_jackknife_stderr(x):
             n = x.shape[0]
-            return np.sqrt((((n - 1) / n) * np.sum((x - x.mean()) ** 2)))
+            # np.sqrt((((n - 1) / n) * np.sum((x - x.mean()) ** 2)))
+            return np.sqrt(n - 1) * np.std(x)
 
         composite_score = score_func(y_true, y_pred)
 
