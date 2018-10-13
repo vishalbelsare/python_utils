@@ -1,15 +1,14 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import KFold, GridSearchCV
+from sklearn.model_selection import KFold
 from dask_ml.model_selection import GridSearchCV as DaskGridSearchCV
-from sklearn.externals.joblib import Parallel, delayed
 from sklearn.utils import column_or_1d, check_consistent_length
 from functools import reduce
 from astropy.stats import jackknife_resampling
 from .utils import check_binary_array
 
 
-class StrategyEvaluator:
+class DistributedStrategyEvaluator(object):
     def __init__(self, pipeline, strategy_grid):
         self.pipeline = pipeline
         self.strategy_grid = strategy_grid
@@ -19,11 +18,8 @@ class StrategyEvaluator:
         self.inner_cv = KFold(n_splits=10)
         self.cv_results = []
 
-    def evaluate(self, X, y,
-                 outer_cv=None, inner_cv=None,
-                 outer_scoring=None,
-                 inner_scoring=None,
-                 outer_jobs=1, inner_jobs=1, verbose=1):
+    def evaluate(self, X, y, outer_cv=None, inner_cv=None,
+                 outer_scoring=None, inner_scoring=None):
 
         assert isinstance(inner_scoring, str)
         self.inner_scoring = inner_scoring
@@ -34,16 +30,10 @@ class StrategyEvaluator:
         if inner_cv is not None:
             self.inner_cv = inner_cv
 
-        if 1 not in (inner_jobs, outer_jobs):
-            raise ValueError('Cannot parallelise inner and outer CV')
+        self.cv_results = [self._fit_and_score(X, y, train, test)
+                           for train, test in outer_cv.split(X, y)]
 
-        parallel = Parallel(n_jobs=outer_jobs, verbose=verbose)
-        self.cv_results = parallel(
-            delayed(self._fit_and_score)(X, y, train, test,
-                                         verbose=verbose, n_jobs=inner_jobs)
-            for train, test in outer_cv.split(X, y))
-
-    def _fit_and_score(self, X, y, train, test, verbose=1, n_jobs=1):
+    def _fit_and_score(self, X, y, train, test):
         X_train = X.iloc[train]
         X_test = X.iloc[test]
         y_train = y.iloc[train]
@@ -55,11 +45,9 @@ class StrategyEvaluator:
             print(f'{strategy} ...')
 
             # inner-cv model selection
-            gscv = GridSearchCV(
-                self.pipeline, param_grid=strategy_values,
-                scoring=self.inner_scoring, cv=self.inner_cv,
-                verbose=verbose, return_train_score=False, refit=True,
-                n_jobs=n_jobs)
+            gscv = DaskGridSearchCV(self.pipeline, param_grid=strategy_values,
+                                    scoring=self.inner_scoring,
+                                    cv=self.inner_cv, refit=True)
             gscv.fit(X_train, y_train)
 
             # outer-cv model evaluation
@@ -95,50 +83,6 @@ class StrategyEvaluator:
                                          ignore_index=True)
         results.cv_fold = results.cv_fold.astype(np.int8)
         return results
-
-
-class DistributedStrategyEvaluator(StrategyEvaluator):
-    def __init__(self, pipeline, strategy_grid):
-        super().__init__(pipeline, strategy_grid)
-
-    def distributed_evaluate(self, X, y,
-                             outer_cv=None, inner_cv=None,
-                             outer_scoring=None, inner_scoring=None):
-
-        assert isinstance(inner_scoring, str)
-        self.inner_scoring = inner_scoring
-        assert isinstance(outer_scoring, dict) & bool(outer_scoring)
-        self.outer_scoring = outer_scoring
-        if outer_cv is not None:
-            self.outer_cv = outer_cv
-        if inner_cv is not None:
-            self.inner_cv = inner_cv
-
-        self.cv_results = [self._distributed_fit_and_score(X, y, train, test)
-                           for train, test in outer_cv.split(X, y)]
-
-    def _distributed_fit_and_score(self, X, y, train, test):
-        X_train = X.iloc[train]
-        X_test = X.iloc[test]
-        y_train = y.iloc[train]
-        y_test = y.iloc[test]
-
-        scores_by_params = dict.fromkeys(self.strategy_grid.keys())
-        for i, (strategy, strategy_values) in enumerate(
-                self.strategy_grid.items()):
-            print(f'{strategy} ...')
-
-            # inner-cv model selection
-            gscv = DaskGridSearchCV(self.pipeline, param_grid=strategy_values,
-                                    scoring=self.inner_scoring,
-                                    cv=self.inner_cv, refit=True)
-            gscv.fit(X_train, y_train)
-
-            # outer-cv model evaluation
-            scores_by_params[strategy] = self._score(gscv, X_test, y_test)
-
-        cv_results = scores_by_params
-        return cv_results
 
 
 def evaluate_score_func(y_true, y_pred, func=None, pointwise=False):
