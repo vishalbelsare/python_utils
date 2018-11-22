@@ -29,10 +29,11 @@ def collapse_multicolumn_index(df):
     :param df: pandas data-frame
     """
 
-    col_names = df.columns.get_level_values(0) + '_' \
-                                              + df.columns.get_level_values(1)
+    col_names = (df.columns.get_level_values(0) + '_' +
+                 df.columns.get_level_values(1))
     df.columns = df.columns.droplevel()
     df.columns = col_names
+    return df
 
 
 def str_dtype_to_cats(df):
@@ -44,6 +45,7 @@ def str_dtype_to_cats(df):
     for col_name, col_series in df.items():
         if is_string_dtype(col_series):
             df[col_name] = col_series.astype('category').cat.as_ordered()
+    return df
 
 
 def clean_str_dtype(df, value='_'):
@@ -59,6 +61,7 @@ def clean_str_dtype(df, value='_'):
             df[col_name] = (col_series.str.strip()
                                       .str.replace(' ', value)
                                       .str.lower())
+    return df
 
 
 def clean_col_names(df):
@@ -69,6 +72,7 @@ def clean_col_names(df):
 
     df.columns = [col.strip().replace(' ', '_').replace('.', '_').lower() 
                   for col in df.columns]
+    return df
 
 
 def add_date_parts(df, col_name, suffix='', drop=False):
@@ -99,7 +103,8 @@ def add_date_parts(df, col_name, suffix='', drop=False):
         df[suffix + date_part] = getattr(col.dt, date_part)
 
     if drop:
-        df.drop(col_name, axis=1, inplace=True)
+        df = df.drop(col_name, axis=1)
+    return df
 
 
 def add_time_parts(df, col_name, suffix='', drop=False):
@@ -121,9 +126,11 @@ def add_time_parts(df, col_name, suffix='', drop=False):
         df[col_name] = col = pd.to_datetime(col, infer_datetime_format=True)
 
     for time_part in ('hour', 'minute', 'second', 'microsecond', 'nanosecond'):
-        df[suffix + time_part] = getattr(col.dt, date_part)
+        df[suffix + time_part] = getattr(col.dt, time_part)
 
     df[suffix + 'elapsed'] = col.astype(np.int64) // 10**9
 
     if drop:
-        df.drop(col_name, axis=1, inplace=True)
+        df = df.drop(col_name, axis=1)
+
+    return df

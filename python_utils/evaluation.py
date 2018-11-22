@@ -53,14 +53,13 @@ class DistributedStrategyEvaluator(object):
             # outer-cv model evaluation
             scores_by_params[strategy] = self._score(gscv, X_test, y_test)
 
-        cv_results = scores_by_params
-        return cv_results
+        return scores_by_params
 
     def _score(self, estimator, X, y):
         results_by_scorer = dict.fromkeys(self.outer_scoring.keys())
         for scorer_key, scorer_func in self.outer_scoring.items():
-            mu, ci = scorer_func(estimator, X, y)
-            results_by_scorer[scorer_key] = np.hstack([mu, ci])
+            mu, stderr = scorer_func(estimator, X, y)
+            results_by_scorer[scorer_key] = np.hstack([mu, stderr])
         return results_by_scorer
 
     def summarize(self):
